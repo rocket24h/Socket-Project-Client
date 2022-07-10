@@ -333,9 +333,10 @@ void timkiem(SOCKET* hconnected)
 	date d2;
 	room* li = new room[3];
 	bookingDates f;
-	cout << "Ten khach san : ";
+	cout << "Nhap ten khach san: ";
 	char* ht = new char[100];
 	cin.getline(ht, 100);
+	
 	//cout << ht;
 	while (1)
 	{
@@ -348,7 +349,6 @@ void timkiem(SOCKET* hconnected)
 		cin >> d.year;
 		if (checkdate(d))
 		{
-
 			convertdate(d, buffer);
 			f.add(buffer, f.arrive);
 			sendAlarm = 1;
@@ -390,6 +390,12 @@ void timkiem(SOCKET* hconnected)
 	}
 	 
 	if (sendAlarm == 1) {
+		/*
+		size = strlen(ht);
+		client.Send(&size, sizeof(size), 0);
+		client.Send(ht, size, 0);
+		cout << ht << "/" << strlen(ht) << endl;
+		*/
 		size = strlen(buffer);
 		client.Send(&size, sizeof(size), 0);
 		client.Send(buffer, size, 0);
@@ -399,11 +405,31 @@ void timkiem(SOCKET* hconnected)
 		int k;
 		client.Receive((int*)&k, sizeof(int), 0);
 		
+		cout << "Danh sach cac phong trong: " << endl;
+
 		for (int j = 0; j < k; j++)
 		{
 			
 			int size = 0;
 			int tempSize = 10;
+
+			char* name;
+			client.Receive((char*)&size, sizeof(int), 0);
+
+			name = new char[size + 1];
+			for (int i = 0; i < size; i = i + tempSize) {
+				if (i + tempSize > size) {
+					tempSize = size - i;
+				}
+				client.Receive((char*)&name[i], tempSize, 0);
+
+			}
+			name[size] = '\0';
+			li[j].name = name;
+			cout << "Phong       : " << name << endl;
+			delete[]name;
+
+
 			char* type;
 			client.Receive((char*)&size, sizeof(int), 0);
 			
@@ -418,7 +444,7 @@ void timkiem(SOCKET* hconnected)
 			type[size] = '\0';
 			
 			li[j].type = type;
-			cout << type << endl;
+			cout << "Loai phong  : " << type << endl;
 			delete[]type;
 			client.Receive((char*)&size, sizeof(int), 0);
 			
@@ -432,7 +458,7 @@ void timkiem(SOCKET* hconnected)
 			}
 			des[size] = '\0';
 			li[j].description = des;
-			cout << des << endl;
+			cout << "Mo ta phong : \n" << des << endl;
 			delete[]des;
 			client.Receive((char*)&size, sizeof(int), 0);
 			
@@ -446,15 +472,14 @@ void timkiem(SOCKET* hconnected)
 			}
 			price[size] = '\0';
 			li[j].price = price;
-			cout << price << endl;
+			cout << "Gia tien    : " << price << endl;
 			delete[]price;
+			cout << endl << "/////////////////////////////////" << endl;;
 		}
-		
 		system("pause");
 	}
 	sendAlarm = 0;
-
-
+	*hconnected = client.Detach();
 }
 
 
@@ -516,9 +541,11 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 				cout << "Exit";
 				system("pause>nul"); // the >nul bit causes it the print no message
 				if (GetAsyncKeyState(VK_DOWN) && x != 24) { // down button pressed
+					
 					GotoXY(18 + 25, x); cout << "  ";
 					GotoXY(18 + 20 + 25, x); cout << "  ";
 					GotoXY(18 + 21 + 25, x); cout << "  ";
+					
 					x++;
 					GotoXY(18 + 25, x); cout << "-> ";
 					GotoXY(18 + 20 + 25, x); cout << " <-";
