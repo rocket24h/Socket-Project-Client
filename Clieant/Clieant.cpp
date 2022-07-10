@@ -43,7 +43,7 @@ struct bookingDates
 		dst = new char[size + 1];
 		strcpy_s((char*)dst, size + 1, src);
 	}
-
+	
 	bookingDates* next;
 };
 struct room
@@ -318,13 +318,13 @@ void timkiem(SOCKET* hconnected)
 {
 	CSocket client;
 	client.Attach(*hconnected);
-
+	
 	system("CLS");
-
+	
 	int sendAlarm = 0;
 	int timeTL = 12;
-
-
+	
+	 
 	int size = 100;
 	int tempSize = 0;
 	char* buffer = new char[12];
@@ -368,7 +368,7 @@ void timkiem(SOCKET* hconnected)
 		cout << "nam : ";
 		cin >> d2.year;
 		cout << countNoOfDays(d, d2);
-		if (checkdate(d2) && countNoOfDays(d, d2) >= 0)
+		if (checkdate(d2)&&countNoOfDays(d,d2)>=0)
 		{
 
 			convertdate(d2, buffer2);
@@ -385,10 +385,10 @@ void timkiem(SOCKET* hconnected)
 			{
 				cout << "Ngay den chua toi ma da toi ngay roi di (T_T)\n";
 			}
-
+			
 		}
 	}
-
+	 
 	if (sendAlarm == 1) {
 		size = strlen(buffer);
 		client.Send(&size, sizeof(size), 0);
@@ -398,31 +398,30 @@ void timkiem(SOCKET* hconnected)
 		client.Send(buffer2, size, 0);
 		int k;
 		client.Receive((int*)&k, sizeof(int), 0);
-		/// <summary>
-		/// loi nhan du lieu////////////////////////////
-		/// </summary>
-		/// <param name="hconnected"></param>
+		
 		for (int j = 0; j < k; j++)
 		{
-			std::cout << k;
+			
 			int size = 0;
 			int tempSize = 10;
 			char* type;
 			client.Receive((char*)&size, sizeof(int), 0);
-
+			
 			type = new char[size + 1];
 			for (int i = 0; i < size; i = i + tempSize) {
-				if (i + tempSize >= size) {
+				if (i + tempSize > size) {
 					tempSize = size - i;
 				}
 				client.Receive((char*)&type[i], tempSize, 0);
-				cout << type[i];
+				
 			}
 			type[size] = '\0';
-
+			
 			li[j].type = type;
 			cout << type << endl;
+			delete[]type;
 			client.Receive((char*)&size, sizeof(int), 0);
+			
 			char* des;
 			des = new char[size + 1];
 			for (int i = 0; i < size; i = i + tempSize) {
@@ -434,7 +433,9 @@ void timkiem(SOCKET* hconnected)
 			des[size] = '\0';
 			li[j].description = des;
 			cout << des << endl;
+			delete[]des;
 			client.Receive((char*)&size, sizeof(int), 0);
+			
 			char* price;
 			price = new char[size + 1];
 			for (int i = 0; i < size; i = i + tempSize) {
@@ -446,8 +447,9 @@ void timkiem(SOCKET* hconnected)
 			price[size] = '\0';
 			li[j].price = price;
 			cout << price << endl;
+			delete[]price;
 		}
-		///////////////////////////////////////////////////////////////////////////////////////////////
+		
 		system("pause");
 	}
 	sendAlarm = 0;
@@ -559,13 +561,13 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 							system("CLS");
 							ClientSocket.Send(&end, sizeof(end), 0);
 						}
-
+						
 						break;
 					case 1:
 						hconnected = new SOCKET(); // Bien doi cai socket thanh mot bien co the truyen vao ham
 						*hconnected = ClientSocket.Detach();
 						dangnhap(hconnected, switchMenu);
-
+						
 						ClientSocket.Attach(*hconnected);
 						delete hconnected;
 						system("CLS");
@@ -573,7 +575,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 						break;
 					case 2:
 					{
-						if (switchMenu == 0)
+						if (switchMenu==0)
 						{
 							hconnected = new SOCKET(); // Bien doi cai socket thanh mot bien co the truyen vao ham
 							*hconnected = ClientSocket.Detach();
@@ -594,8 +596,8 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 							system("CLS");
 							ClientSocket.Send(&end, sizeof(end), 0);
 						}
-
-
+						
+						
 					}
 					break;
 					case 3:
@@ -604,7 +606,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 						system("CLS");
 						menu = false;
 						break;
-
+					
 					default:
 						break;
 					}
