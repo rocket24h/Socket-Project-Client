@@ -5,13 +5,16 @@
 #include "framework.h"
 #include <afxsock.h>
 #include <iostream>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 #include <string>
 #include "date.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 #include <list>
-
+using namespace cv;
 // The one and only application object
 
 CWinApp theApp;
@@ -43,9 +46,22 @@ struct bookingDates
 		dst = new char[size + 1];
 		strcpy_s((char*)dst, size + 1, src);
 	}
-	
+
 	bookingDates* next;
 };
+
+
+struct  image {
+	Mat data;
+	int width;
+	int height;
+	void readImageFile(string fileName) {
+		this->data = imread(fileName);
+		height = data.size[0];
+		width = data.size[1];
+	}
+};
+
 struct room
 {
 	char* name = NULL;
@@ -318,28 +334,24 @@ void timkiem(SOCKET* hconnected)
 {
 	CSocket client;
 	client.Attach(*hconnected);
-	
 	system("CLS");
-	
 	int sendAlarm = 0;
 	int timeTL = 12;
-	
-	 
 	int size = 100;
 	int tempSize = 0;
+	int k = 0;
 	char* buffer = new char[12];
 	char* buffer2 = new char[12];
 	date d;
 	date d2;
-	room* li = new room[3];
+	room* li = new room[10];
 	bookingDates f;
 	cout << "Nhap ten khach san: ";
 	char* ht = new char[100];
 	cin.getline(ht, 100);
-	
+
 	//cout << ht;
-	while (1)
-	{
+	while (timeTL != 0) {
 		cout << "Ngay vao o :\n ";
 		std::cout << "ngay : ";
 		cin >> d.day;
@@ -357,9 +369,10 @@ void timkiem(SOCKET* hconnected)
 		else {
 			std::cout << "Ngay nhap khong hop le! \n";
 		}
+		timeTL--;
 	}
-	while (1)
-	{
+	timeTL = 12;
+	while (timeTL != 0) {
 		cout << "Ngay roi di :\n ";
 		cout << "ngay : ";
 		cin >> d2.day;
@@ -368,7 +381,7 @@ void timkiem(SOCKET* hconnected)
 		cout << "nam : ";
 		cin >> d2.year;
 		cout << countNoOfDays(d, d2);
-		if (checkdate(d2)&&countNoOfDays(d,d2)>=0)
+		if (checkdate(d2) && countNoOfDays(d, d2) >= 0)
 		{
 
 			convertdate(d2, buffer2);
@@ -385,10 +398,10 @@ void timkiem(SOCKET* hconnected)
 			{
 				cout << "Ngay den chua toi ma da toi ngay roi di (T_T)\n";
 			}
-			
+
 		}
 	}
-	 
+
 	if (sendAlarm == 1) {
 		/*
 		size = strlen(ht);
@@ -402,83 +415,116 @@ void timkiem(SOCKET* hconnected)
 		size = strlen(buffer2);
 		client.Send(&size, sizeof(size), 0);
 		client.Send(buffer2, size, 0);
-		int k;
 		client.Receive((int*)&k, sizeof(int), 0);
-		
 		cout << "Danh sach cac phong trong: " << endl;
-
-		for (int j = 0; j < k; j++)
-		{
-			
+		for (int j = 0; j < k; j++) {
 			int size = 0;
 			int tempSize = 10;
-
-			char* name;
 			client.Receive((char*)&size, sizeof(int), 0);
-
-			name = new char[size + 1];
-			for (int i = 0; i < size; i = i + tempSize) {
-				if (i + tempSize > size) {
-					tempSize = size - i;
-				}
-				client.Receive((char*)&name[i], tempSize, 0);
-
-			}
-			name[size] = '\0';
-			li[j].name = name;
-			cout << "Phong       : " << name << endl;
-			delete[]name;
-
-
-			char* type;
-			client.Receive((char*)&size, sizeof(int), 0);
-			
-			type = new char[size + 1];
-			for (int i = 0; i < size; i = i + tempSize) {
-				if (i + tempSize > size) {
-					tempSize = size - i;
-				}
-				client.Receive((char*)&type[i], tempSize, 0);
-				
-			}
-			type[size] = '\0';
-			
-			li[j].type = type;
-			cout << "Loai phong  : " << type << endl;
-			delete[]type;
-			client.Receive((char*)&size, sizeof(int), 0);
-			
-			char* des;
-			des = new char[size + 1];
+			if (size == 0) break;
+			li[j].name = new char[size + 1];
 			for (int i = 0; i < size; i = i + tempSize) {
 				if (i + tempSize >= size) {
 					tempSize = size - i;
 				}
-				client.Receive((char*)&des[i], tempSize, 0);
+				client.Receive((char*)&li[j].name[i], tempSize, 0);
+
 			}
-			des[size] = '\0';
-			li[j].description = des;
-			cout << "Mo ta phong : \n" << des << endl;
-			delete[]des;
+			li[j].name[size] = '\0';
+			cout << "Phong       : " << li[j].name << endl;
 			client.Receive((char*)&size, sizeof(int), 0);
-			
-			char* price;
-			price = new char[size + 1];
+			if (size <= 0) break;
+			li[j].type = new char[size + 1];
 			for (int i = 0; i < size; i = i + tempSize) {
 				if (i + tempSize >= size) {
 					tempSize = size - i;
 				}
-				client.Receive((char*)&price[i], tempSize, 0);
+				client.Receive((char*)&li[j].type[i], tempSize, 0);
+
 			}
-			price[size] = '\0';
-			li[j].price = price;
-			cout << "Gia tien    : " << price << endl;
-			delete[]price;
-			cout << endl << "/////////////////////////////////" << endl;;
+			li[j].type[size] = '\0';
+			cout << "Loai phong  : " << li[j].type << endl;
+			client.Receive((char*)&size, sizeof(int), 0);
+			if (size <= 0) break;
+			li[j].description = new char[size + 1];
+			for (int i = 0; i < size; i = i + tempSize) {
+				if (i + tempSize >= size) {
+					tempSize = size - i;
+				}
+				client.Receive((char*)&li[j].description[i], tempSize, 0);
+			}
+			li[j].description[size] = '\0';
+			cout << "Mo ta phong : \n" << li[j].description << endl;
+			client.Receive((char*)&size, sizeof(int), 0);
+			if (size <= 0) break;
+			li[j].price = new char[size + 1];
+			for (int i = 0; i < size; i = i + tempSize) {
+				if (i + tempSize >= size) {
+					tempSize = size - i;
+				}
+				client.Receive((char*)&li[j].price[i], tempSize, 0);
+			}
+			li[j].price[size] = '\0';
+			cout << "Gia tien    : " << li[j].price<< endl;
+			cout << endl << "/////////////////////////////////" << endl;
 		}
-		system("pause");
+		cout << endl;
 	}
-	sendAlarm = 0;
+	char* nameRoom = NULL;
+	int type = 0;
+	cout << "Khach hang muon xem anh co phong nao khong ?" << endl;
+	cin >> type;
+	client.Send(&type, sizeof(int), 0);
+	int Images = 3;
+	uchar* dataReceiver = NULL;
+//	client.Receive((int*)&Images, sizeof(int), 0);
+	image sudo;
+	size = 0;
+	int payLoads;
+	vector <uchar> data;
+	for (int i = 0; i < Images; i++) {
+		Mat reSize;
+		client.Receive((int*)&sudo.height, sizeof(int), 0);
+		client.Receive((int*)&sudo.width, sizeof(int), 0);
+		client.Receive((int*)&size, sizeof(int), 0);
+		dataReceiver = new uchar[size];
+		if (size == 0) return;
+		payLoads = 100000;
+		for (int j = 0; j < size; j = payLoads + j) {
+			if (j + payLoads >= size) {
+				payLoads = size - j;
+			}
+			client.Receive((uchar*)&dataReceiver[j], payLoads, 0);
+		}
+		copy(&dataReceiver[0], &dataReceiver[size - 1], back_inserter(data));
+		sudo.data = imdecode(data, 1);
+		resize(sudo.data, reSize, Size(680, 480));
+		switch (i) {
+		case 0: imshow("Phong ngu", reSize);
+			break;
+		case 1: imshow("Phong khach", reSize);
+			break;
+		case 2: imshow("Phong tam", reSize);
+			break;
+		default:
+			break;
+		}
+		size = 0;
+		delete[] dataReceiver;
+		dataReceiver = NULL;
+		data.clear();
+		client.Send(&size, sizeof(size), 0);
+	}
+	system("CLS");
+	cout << "Danh sach cac phong trong: " << endl;
+	for (int i = 0; i < k; i++) {
+		cout << "Phong       : " << li[i].name << endl;
+		cout << "Loai phong  : " << li[i].type << endl;
+		cout << "Mo ta phong : " << li[i].description << endl;
+		cout << "Gia tien    : " << li[i].price << endl;
+		cout << endl << "/////////////////////////////////" << endl;
+	}
+	waitKey(0);
 	*hconnected = client.Detach();
 }
 
@@ -534,19 +580,23 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 				else {
 					cout << "Dat phong";
 				}
-				if (switchMenu != 0) {
-					GotoXY(25 + 25, 23);
+				GotoXY(25 + 25, 23);
+				if (switchMenu != 0) {					
 					cout << "Huy phong" << endl;
 				}
 				GotoXY(25 + 25, 24);
-				cout << "Exit";
+				if (switchMenu == 0) {
+					cout << "Thoat";
+				}
+				else {
+					cout << "Dang xuat";
+				}
 				system("pause>nul"); // the >nul bit causes it the print no message
 				if (GetAsyncKeyState(VK_DOWN) && x != 24) { // down button pressed
-					
+
 					GotoXY(18 + 25, x); cout << "  ";
 					GotoXY(18 + 20 + 25, x); cout << "  ";
 					GotoXY(18 + 21 + 25, x); cout << "  ";
-					
 					x++;
 					GotoXY(18 + 25, x); cout << "-> ";
 					GotoXY(18 + 20 + 25, x); cout << " <-";
@@ -575,9 +625,6 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 							dangky(hconnected);
 							ClientSocket.Attach(*hconnected);
 							delete hconnected;
-							system("CLS");
-							ClientSocket.Send(&end, sizeof(end), 0);
-							system("CLS");
 						}
 						else
 						{
@@ -585,56 +632,45 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 							*hconnected = ClientSocket.Detach();
 							timkiem(hconnected);
 							ClientSocket.Attach(*hconnected);
-							delete hconnected;
-							system("CLS");
-							ClientSocket.Send(&end, sizeof(end), 0);
+						//	delete hconnected;
 						}
-						
+						ClientSocket.Send(&end, sizeof(end), 0);
+						system("CLS");
 						break;
 					case 1:
-						hconnected = new SOCKET(); // Bien doi cai socket thanh mot bien co the truyen vao ham
-						*hconnected = ClientSocket.Detach();
-						dangnhap(hconnected, switchMenu);
-						
-						ClientSocket.Attach(*hconnected);
-						delete hconnected;
-						system("CLS");
-						ClientSocket.Send(&end, sizeof(end), 0);
-						break;
-					case 2:
-					{
-						if (switchMenu==0)
+						if (switchMenu == 0)
 						{
 							hconnected = new SOCKET(); // Bien doi cai socket thanh mot bien co the truyen vao ham
 							*hconnected = ClientSocket.Detach();
-							timkiem(hconnected);
+							dangnhap(hconnected, switchMenu);
 							ClientSocket.Attach(*hconnected);
 							delete hconnected;
 							system("CLS");
 							ClientSocket.Send(&end, sizeof(end), 0);
-							system("CLS");
+						}
+						else {
+							// phan dat phong o day
+						}
+						break;
+					case 2: 
+						if (switchMenu == 0) {
 						}
 						else
-						{
-							hconnected = new SOCKET(); // Bien doi cai socket thanh mot bien co the truyen vao ham
-							*hconnected = ClientSocket.Detach();
-							timkiem(hconnected);
-							ClientSocket.Attach(*hconnected);
-							delete hconnected;
-							system("CLS");
-							ClientSocket.Send(&end, sizeof(end), 0);
+						{					
 						}
-						
-						
-					}
 					break;
 					case 3:
-						end = 0;
-						ClientSocket.Send(&end, sizeof(end), 0);
+						if (switchMenu == 0) {
+							end = 0;
+							menu = false;
+						}
+						else {
+							switchMenu = 0;
+							ClientSocket.Send(&switchMenu, sizeof(int), 0);				
+						}
 						system("CLS");
-						menu = false;
+						ClientSocket.Send(&end, sizeof(end), 0);
 						break;
-					
 					default:
 						break;
 					}
