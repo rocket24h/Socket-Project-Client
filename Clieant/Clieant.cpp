@@ -529,6 +529,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 				GotoXY(25 + 25, 22);
 				if (switchMenu == 0) {
 					cout << "Dang nhap";
+					x = 21;
 				}
 				else {
 					cout << "Dat phong";
