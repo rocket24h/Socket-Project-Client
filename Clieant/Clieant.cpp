@@ -829,21 +829,37 @@ void datphong(SOCKET* hconnected)
 		}
 	}
 	client.Send(&numroom, sizeof(int), 0);
-	int tien = 0, billID = 0;
+	int tien = 0;
+	char* billID = new char[20];
 	if (numroom == 0)
 	{
 		cout << "Ban chua dat phong nao";
 	}
 	else
 	{
+		tempSize = 3;
 		cout << "Danh sach cac phong da dat : ";
 		for (int i = 0; i < numroom; i++)
 		{
 			cout << li[listroom[i]].name << " ";
 			client.Send(&listroom[i], sizeof(size), 0);
 		}
-		client.Receive((char*)&billID, sizeof(int), 0);
+
+		client.Receive((char*)&size, sizeof(int), 0);
+		cout << size << endl;
+		billID = new char[size + 1];
+		for (int i = 0; i < size; i = i + tempSize) {
+			if (i + tempSize >= size) {
+				tempSize = size - i;
+			}
+			client.Receive((char*)&billID[i], tempSize, 0);
+
+		}
+		billID[size] = '\0';
+		cout << billID << endl;
+
 		client.Receive((char*)&tien, sizeof(int), 0);
+		cout << tien << endl;
 		cout << endl;
 	}
 	cout << "Bill ID: " << billID << endl;
